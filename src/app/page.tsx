@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { InputForm } from '@/components/views/input-form';
+import { MultiStepInputForm } from '@/components/views/multi-step-input-form';
 import type { GeneratePersonalizedItinerariesInput } from '@/ai/flows/generate-personalized-itineraries';
 import { generatePersonalizedItineraries } from '@/ai/flows/generate-personalized-itineraries';
 import { useToast } from '@/hooks/use-toast';
@@ -34,12 +34,12 @@ export default function HomePage() {
   };
 
   return (
-    <main className="container mx-auto px-4 py-16 sm:py-24 lg:py-32">
+    <main className="container mx-auto px-4 py-12 sm:py-16 md:py-20">
         <div className="max-w-2xl mx-auto text-center">
             <motion.h1 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
+                transition={{ duration: 0.5, delay: 0.1, ease: "easeOut" }}
                 className="text-5xl sm:text-6xl md:text-7xl font-headline font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70"
             >
                 Where are we going?
@@ -47,7 +47,7 @@ export default function HomePage() {
             <motion.p 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+                transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
                 className="mt-4 text-lg md:text-xl text-muted-foreground"
             >
                 Tell us a few things. We’ll plan everything.
@@ -55,7 +55,7 @@ export default function HomePage() {
         </div>
 
         <div className="mt-12 sm:mt-16">
-            <InputForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
+            <MultiStepInputForm onSubmit={handleFormSubmit} isGenerating={isGenerating} />
         </div>
     </main>
   );
