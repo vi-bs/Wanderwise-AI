@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Globe, Waves, PartyPopper, Utensils, Trees, Palmtree } from 'lucide-react';
+import type { GeneratePersonalizedItinerariesInput } from '@/ai/flows/generate-personalized-itineraries';
 
 const preferencesOptions = [
   { label: "Food", icon: Utensils },
@@ -32,7 +33,7 @@ const formSchema = z.object({
 type InputFormValues = z.infer<typeof formSchema>;
 
 interface InputFormProps {
-  onSubmit: (data: any) => void;
+  onSubmit: (data: GeneratePersonalizedItinerariesInput) => void;
   isGenerating: boolean;
 }
 
@@ -71,14 +72,12 @@ export function InputForm({ onSubmit, isGenerating }: InputFormProps) {
 
   const handleSubmit = (values: InputFormValues) => {
     const budgetMap: {[key: string]: string} = { '💸 Budget': '10000-30000', '💼 Balanced': '30000-70000', '✨ Premium': '70000+'};
-    const submittedData = {
+    const submittedData: GeneratePersonalizedItinerariesInput = {
         ...values,
         budget_range_inr: budgetMap[budgetLabels(values.budget)],
         travel_dates: `Not specified`, // This can be updated if a date picker is re-introduced
         round_trip: true, // Assuming round trip for this simplified form
     };
-    // remove budget field
-    delete (submittedData as any).budget;
     onSubmit(submittedData);
   };
 

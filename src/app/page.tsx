@@ -2,26 +2,26 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { InputForm } from '@/components/views/input-form';
 import type { GeneratePersonalizedItinerariesInput } from '@/ai/flows/generate-personalized-itineraries';
+import { generatePersonalizedItineraries } from '@/ai/flows/generate-personalized-itineraries';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleFormSubmit = async (data: GeneratePersonalizedItinerariesInput) => {
     setIsGenerating(true);
     try {
-      // In a real app, you would navigate to a loading/results page.
-      // For this demo, we'll just simulate a delay.
-      console.log('Submitted data:', data);
-      await new Promise(resolve => setTimeout(resolve, 4000));
-      toast({
-        title: "Trip Planned!",
-        description: "Your adventure awaits. (Navigation to results page not implemented)",
-      });
+      const result = await generatePersonalizedItineraries(data);
+      // Store result in localStorage to pass to the next page
+      localStorage.setItem('tripResults', JSON.stringify(result));
+      localStorage.setItem('tripRequest', JSON.stringify(data));
+      router.push('/results');
     } catch (error) {
       console.error("Failed to generate itinerary:", error);
       toast({
@@ -29,8 +29,7 @@ export default function HomePage() {
         title: "Something felt off",
         description: "The genie had some trouble. Please try again.",
       });
-    } finally {
-        setIsGenerating(false);
+      setIsGenerating(false);
     }
   };
 
