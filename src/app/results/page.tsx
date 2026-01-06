@@ -5,17 +5,18 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, ArrowLeft, BedDouble, Car, CheckCircle2, ChevronRight, Info, Link as LinkIcon, MapPin, Milestone, Plane, Shield, Star, TramFront, Users, Utensils, Wallet } from 'lucide-react';
+import { AlertCircle, ArrowLeft, BedDouble, Car, CheckCircle2, ChevronRight, Info, Link as LinkIcon, MapPin, Milestone, Plane, Shield, Star, TramFront, Users, Utensils, Wallet, Sparkles } from 'lucide-react';
 import type { TripData, Itinerary, DailyPlan, Activity, Hotel, CommuteOption } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from "@/components/ui/carousel"
+
 
 function LoadingState() {
   const [progress, setProgress] = useState(13);
@@ -57,6 +58,49 @@ function SafetyScore({ score }: { score: number }) {
   );
 }
 
+function ItineraryVibeSelector({ itineraries, onSelect, activeItineraryId }: { itineraries: Itinerary[], onSelect: (itinerary: Itinerary) => void, activeItineraryId: string | null }) {
+    const [api, setApi] = useState<CarouselApi>()
+    
+    useEffect(() => {
+        if(!api) return;
+        const activeIndex = itineraries.findIndex(it => it.id === activeItineraryId);
+        if(activeIndex !== -1 && api.selectedScrollSnap() !== activeIndex) {
+            api.scrollTo(activeIndex);
+        }
+    }, [api, activeItineraryId, itineraries])
+
+    const handleSelect = (index: number) => {
+        api?.scrollTo(index);
+        onSelect(itineraries[index]);
+    }
+
+    return (
+        <Carousel setApi={setApi} className="w-full max-w-4xl mx-auto" opts={{align: 'center', loop: true}}>
+            <CarouselContent>
+                {itineraries.map((itinerary, index) => (
+                    <CarouselItem key={itinerary.id} className="md:basis-1/2 lg:basis-1/3">
+                         <Card 
+                            onClick={() => handleSelect(index)}
+                            className={cn(
+                                "cursor-pointer transition-all duration-300 transform",
+                                activeItineraryId === itinerary.id 
+                                    ? "border-primary shadow-2xl scale-105 bg-card"
+                                    : "border-border hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+                            )}
+                        >
+                            <CardHeader>
+                                <CardTitle className="text-xl font-headline">{itinerary.vibe}</CardTitle>
+                                <CardDescription>{itinerary.title}</CardDescription>
+                            </CardHeader>
+                        </Card>
+                    </CarouselItem>
+                ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden md:flex" />
+            <CarouselNext className="hidden md:flex" />
+        </Carousel>
+    );
+}
 
 export default function ResultsPage() {
   const [tripData, setTripData] = useState<TripData | null>(null);
@@ -75,6 +119,28 @@ export default function ResultsPage() {
       let itineraries: Itinerary[] = parsedResults.itineraries || [];
       
       if (itineraries.length > 0) {
+        // Calculate initial costs
+        itineraries = itineraries.map(itin => {
+            const numNights = parseInt(parsedRequest.duration_days.split('-')[0], 10) -1 || 1;
+            const accommodationCost = itin.hotelOptions[0]?.costPerNight * numNights || 0;
+            const activitiesCost = itin.dailyPlan.flatMap(d => d.activities).reduce((acc, activity) => activity.selected ? acc + activity.cost : acc, 0);
+            const commuteCost = (itin.commuteOptions[0]?.cost || 0) * (parseInt(parsedRequest.duration_days.split('-')[0], 10) || 1);
+            const foodCost = (itin.cost.food || 0) * (parseInt(parsedRequest.duration_days.split('-')[0], 10) || 1);
+            const total = itin.cost.flights + accommodationCost + activitiesCost + commuteCost + foodCost;
+            return {
+                ...itin,
+                cost: {
+                    ...itin.cost,
+                    total,
+                    accommodation: accommodationCost,
+                    activities: activitiesCost,
+                    commute: commuteCost,
+                    food: foodCost
+                }
+            }
+        });
+
+
         setTripData({ input: parsedRequest, itineraries });
         const initialItinerary = itineraries[0];
         setActiveItinerary(initialItinerary);
@@ -86,11 +152,10 @@ export default function ResultsPage() {
           setSelectedCommuteId(initialItinerary.commuteOptions[0].id);
         }
       } else {
-        // Handle case where no itineraries are returned
         router.push('/');
       }
     } else {
-      // router.push('/'); // Redirect if no data
+      // Keep loading screen if no data yet
     }
   }, [router]);
 
@@ -101,6 +166,16 @@ export default function ResultsPage() {
     if (activity) {
       activity.selected = isSelected;
       setActiveItinerary(updatedItinerary);
+    }
+  };
+  
+  const handleItinerarySelection = (itinerary: Itinerary) => {
+    setActiveItinerary(itinerary);
+    if (itinerary.hotelOptions.length > 0 && !itinerary.hotelOptions.find(h => h.id === selectedHotelId)) {
+      setSelectedHotelId(itinerary.hotelOptions[0].id);
+    }
+    if (itinerary.commuteOptions.length > 0 && !itinerary.commuteOptions.find(c => c.id === selectedCommuteId)) {
+        setSelectedCommuteId(itinerary.commuteOptions[0].id);
     }
   };
 
@@ -149,81 +224,92 @@ export default function ResultsPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <div className="container mx-auto py-8">
-        <header className="mb-8">
-          <Button variant="ghost" onClick={() => router.push('/')} className="mb-4 text-muted-foreground">
+        <header className="mb-8 text-center">
+          <Button variant="ghost" onClick={() => router.push('/')} className="absolute top-6 left-6 text-muted-foreground">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to planning
           </Button>
-          <div className="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-            <div>
-              <h1 className="text-4xl font-headline text-foreground">Your Trip to {tripData.input.destination}</h1>
-              <p className="text-muted-foreground text-lg">{tripData.input.duration_days}, {tripData.input.people_count} people, on a ₹{parseInt(tripData.input.budget_range_inr).toLocaleString('en-IN')} budget.</p>
-            </div>
-             <Card className="p-4 bg-background">
-              <div className="flex items-center justify-between gap-6">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Total Spent</p>
-                  <p className="text-2xl font-bold text-primary">₹{calculatedCosts.totalSpent.toLocaleString('en-IN')}</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Remaining Budget</p>
-                  <p className="text-2xl font-bold">{calculatedCosts.remainingBudget.toLocaleString('en-IN')}</p>
-                </div>
-                 <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Overall Safety</p>
-                  <div className="text-2xl font-bold flex items-center justify-center gap-2">
-                    <SafetyScore score={calculatedCosts.overallSafetyScore} />
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </div>
+          <motion.div initial={{opacity:0, y: -20}} animate={{opacity:1, y:0}}>
+            <p className="text-lg font-semibold text-primary">Your trip to</p>
+            <h1 className="text-5xl font-headline text-foreground">{tripData.input.destination}</h1>
+            <p className="text-muted-foreground text-lg mt-1">{tripData.input.duration_days}, {tripData.input.people_count} people, on a ₹{parseInt(tripData.input.budget_range_inr).toLocaleString('en-IN')} budget.</p>
+          </motion.div>
         </header>
 
-        <main className="grid lg:grid-cols-3 gap-8">
+        <motion.div initial={{opacity:0, y: 20}} animate={{opacity:1, y:0}} transition={{delay: 0.2}} className="my-10">
+            <h2 className="text-center text-2xl font-headline mb-4">First, pick a vibe...</h2>
+            <ItineraryVibeSelector 
+                itineraries={tripData.itineraries} 
+                onSelect={handleItinerarySelection}
+                activeItineraryId={activeItinerary.id}
+            />
+        </motion.div>
+
+
+        <main className="grid lg:grid-cols-3 gap-8 items-start">
           {/* Left Column: Itinerary */}
           <div className="lg:col-span-2 space-y-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>{activeItinerary.vibe}: {activeItinerary.title}</CardTitle>
-                <CardDescription>{activeItinerary.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Accordion type="single" collapsible defaultValue="day-1" className="w-full">
-                  {activeItinerary.dailyPlan.map((day, dayIndex) => (
-                    <AccordionItem value={`day-${day.day}`} key={day.day}>
-                      <AccordionTrigger className="text-xl font-headline hover:no-underline">Day {day.day}: {day.title}</AccordionTrigger>
-                      <AccordionContent className="pt-4">
-                        <div className="space-y-4">
-                          {day.activities.map((activity) => (
-                            <div key={activity.id} className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                              <Checkbox
-                                id={`activity-${activity.id}`}
-                                checked={activity.selected}
-                                onCheckedChange={(checked) => handleActivitySelection(dayIndex, activity.id, !!checked)}
-                                className="mt-1"
-                              />
-                              <div className="flex-grow">
-                                <Label htmlFor={`activity-${activity.id}`} className="font-semibold text-base cursor-pointer">{activity.name}</Label>
-                                <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                                  <span>Duration: {activity.duration}</span>
-                                  <span>Cost: ₹{activity.cost.toLocaleString('en-IN')}</span>
-                                  <a href={activity.infoLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
-                                    <LinkIcon className="h-3 w-3" /> More Info
-                                  </a>
-                                </div>
-                              </div>
-                              <SafetyScore score={activity.safetyScore} />
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={activeItinerary.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+              >
+                <Card className="overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-primary-start/10 to-primary-end/10">
+                    <CardTitle className="text-3xl font-headline">{activeItinerary.vibe}: {activeItinerary.title}</CardTitle>
+                    <CardDescription className="text-base">{activeItinerary.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <Accordion type="single" collapsible defaultValue="day-1" className="w-full">
+                      {activeItinerary.dailyPlan.map((day, dayIndex) => (
+                        <AccordionItem value={`day-${day.day}`} key={day.day}>
+                          <AccordionTrigger className="text-xl font-headline hover:no-underline px-6 py-4">Day {day.day}: {day.title}</AccordionTrigger>
+                          <AccordionContent className="px-6">
+                            <div className="space-y-4 border-l-2 border-dashed border-primary/50 ml-2 pl-6 py-4">
+                              {day.activities.map((activity) => (
+                                <motion.div 
+                                    key={activity.id} 
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 * dayIndex }}
+                                    className="flex items-start gap-4 p-3 rounded-lg hover:bg-muted/50 transition-colors relative"
+                                >
+                                  <div className="absolute -left-[35px] top-1/2 -translate-y-1/2 bg-background h-5 w-5 rounded-full border-2 border-primary/50 flex items-center justify-center">
+                                      <div className={cn("h-2 w-2 rounded-full", activity.selected ? 'bg-primary' : 'bg-muted')}></div>
+                                  </div>
+                                  <Checkbox
+                                    id={`activity-${activity.id}`}
+                                    checked={activity.selected}
+                                    onCheckedChange={(checked) => handleActivitySelection(dayIndex, activity.id, !!checked)}
+                                    className="mt-1"
+                                  />
+                                  <div className="flex-grow">
+                                    <Label htmlFor={`activity-${activity.id}`} className="font-semibold text-base cursor-pointer">{activity.name}</Label>
+                                    <p className="text-sm text-muted-foreground italic">"{activity.review.snippet}" <span className="font-bold not-italic">({activity.review.rating} ★)</span></p>
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                                      <span>Duration: {activity.duration}</span>
+                                      <span>Cost: ₹{activity.cost.toLocaleString('en-IN')}</span>
+                                      <a href={activity.infoLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-primary">
+                                        <LinkIcon className="h-3 w-3" /> More Info
+                                      </a>
+                                    </div>
+                                  </div>
+                                  <SafetyScore score={activity.safetyScore} />
+                                </motion.div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </CardContent>
-            </Card>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </AnimatePresence>
             
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.2}}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.3}}>
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2"><Milestone /> Summary & Booking</CardTitle>
@@ -232,7 +318,7 @@ export default function ResultsPage() {
                         {selectedHotel && (
                              <div className="flex justify-between items-center p-3 rounded-lg bg-muted/50">
                                 <p className="font-semibold flex items-center gap-2"><BedDouble className="text-primary"/> Selected Stay: {selectedHotel.name}</p>
-                                <Button size="sm" asChild variant="ghost">
+                                <Button size="sm" asChild>
                                     <a href={selectedHotel.bookingLink} target="_blank" rel="noopener noreferrer">Book Now <ChevronRight className="h-4 w-4 ml-1" /></a>
                                 </Button>
                             </div>
@@ -251,6 +337,11 @@ export default function ResultsPage() {
                                 <li key={a.id}>{a.name}</li>
                             ))}
                         </ul>
+                         <div className="flex justify-end pt-4">
+                            <Button size="lg" className="bg-gradient-to-r from-primary-start to-primary-end text-primary-foreground shadow-lg hover:shadow-xl">
+                                <Sparkles className="mr-2 h-4 w-4" /> Finalize & Book Trip
+                            </Button>
+                        </div>
                     </CardContent>
                 </Card>
             </motion.div>
@@ -258,64 +349,8 @@ export default function ResultsPage() {
           </div>
 
           {/* Right Column: Options & Costs */}
-          <div className="space-y-8">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><BedDouble /> Hotel Stays</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RadioGroup value={selectedHotelId || ''} onValueChange={setSelectedHotelId}>
-                    {activeItinerary.hotelOptions.map((hotel) => (
-                      <Label key={hotel.id} htmlFor={`hotel-${hotel.id}`} className={cn("block p-4 rounded-lg border-2 cursor-pointer transition-all", selectedHotelId === hotel.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
-                        <div className="flex items-center justify-between">
-                           <div className="flex items-center">
-                            <RadioGroupItem value={hotel.id} id={`hotel-${hotel.id}`} className="mr-4"/>
-                            <div>
-                                <p className="font-semibold">{hotel.name}</p>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span className="flex items-center gap-1"><Star className="h-4 w-4 text-yellow-400 fill-yellow-400"/> {hotel.rating}</span>
-                                    <span>₹{hotel.costPerNight.toLocaleString('en-IN')}/night</span>
-                                </div>
-                            </div>
-                           </div>
-                           <SafetyScore score={hotel.safetyScore} />
-                        </div>
-                      </Label>
-                    ))}
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            </motion.div>
-
+          <div className="space-y-8 lg:sticky lg:top-8">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.1}}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Car /> Commute Options</CardTitle>
-                  <CardDescription>Estimated daily cost</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <RadioGroup value={selectedCommuteId || ''} onValueChange={setSelectedCommuteId}>
-                    {activeItinerary.commuteOptions.map((option) => (
-                      <Label key={option.id} htmlFor={`commute-${option.id}`} className={cn("block p-3 rounded-lg border-2 cursor-pointer transition-all", selectedCommuteId === option.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
-                        <div className="flex items-center">
-                            <RadioGroupItem value={option.id} id={`commute-${option.id}`} className="mr-4"/>
-                             <div className="flex items-center justify-between w-full">
-                                <p className="font-semibold flex items-center gap-2">
-                                    {option.type === 'Metro' ? <TramFront/> : option.type === 'Taxi' ? <Car /> : <Users />}
-                                    {option.type}
-                                </p>
-                                <span className="font-semibold">₹{option.cost.toLocaleString('en-IN')}/day</span>
-                             </div>
-                        </div>
-                      </Label>
-                    ))}
-                   </RadioGroup>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.2}}>
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2"><Wallet /> Money Breakdown</CardTitle>
@@ -357,9 +392,66 @@ export default function ResultsPage() {
                 </CardContent>
               </Card>
             </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.2}}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><BedDouble /> Hotel Stays</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RadioGroup value={selectedHotelId || ''} onValueChange={setSelectedHotelId}>
+                    {activeItinerary.hotelOptions.map((hotel) => (
+                      <Label key={hotel.id} htmlFor={`hotel-${hotel.id}`} className={cn("block p-4 rounded-lg border-2 cursor-pointer transition-all", selectedHotelId === hotel.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
+                        <div className="flex items-center justify-between">
+                           <div className="flex items-center">
+                            <RadioGroupItem value={hotel.id} id={`hotel-${hotel.id}`} className="mr-4"/>
+                            <div>
+                                <p className="font-semibold">{hotel.name}</p>
+                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1"><Star className="h-4 w-4 text-yellow-400 fill-yellow-400"/> {hotel.rating}</span>
+                                    <span>₹{hotel.costPerNight.toLocaleString('en-IN')}/night</span>
+                                </div>
+                            </div>
+                           </div>
+                           <SafetyScore score={hotel.safetyScore} />
+                        </div>
+                      </Label>
+                    ))}
+                  </RadioGroup>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{delay: 0.3}}>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2"><Car /> Commute Options</CardTitle>
+                  <CardDescription>Estimated daily cost</CardDescription>
+                </CardHeader>
+                <CardContent>
+                   <RadioGroup value={selectedCommuteId || ''} onValueChange={setSelectedCommuteId}>
+                    {activeItinerary.commuteOptions.map((option) => (
+                      <Label key={option.id} htmlFor={`commute-${option.id}`} className={cn("block p-3 rounded-lg border-2 cursor-pointer transition-all", selectedCommuteId === option.id ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50')}>
+                        <div className="flex items-center">
+                            <RadioGroupItem value={option.id} id={`commute-${option.id}`} className="mr-4"/>
+                             <div className="flex items-center justify-between w-full">
+                                <p className="font-semibold flex items-center gap-2">
+                                    {option.type === 'Scooter Rental' ? <Milestone className='rotate-90'/> : option.type.includes('Car') ? <Car /> : <Users />}
+                                    {option.type}
+                                </p>
+                                <span className="font-semibold">₹{option.cost.toLocaleString('en-IN')}/day</span>
+                             </div>
+                        </div>
+                      </Label>
+                    ))}
+                   </RadioGroup>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
         </main>
       </div>
     </div>
   );
 }
+
+    
