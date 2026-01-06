@@ -37,7 +37,7 @@ export type GeneratePersonalizedItinerariesOutput = z.infer<
 export async function generatePersonalizedItineraries(
   input: GeneratePersonalizedItinerariesInput
 ): Promise<GeneratePersonalizedItinerariesOutput> {
-  const webhookUrl = process.env.N8N_WEBHOOK_URL;
+  const webhookUrl = 'http://host.docker.internal:5678/webhook-test/start-trip';
 
   if (!webhookUrl) {
     throw new Error(
