@@ -100,17 +100,17 @@ export default function HomePage() {
   const renderContent = () => {
     switch (viewState) {
       case 'intro':
-        return <MotionWrapper key="intro"><IntroView /></MotionWrapper>;
+        return <MotionWrapper motionKey="intro"><IntroView /></MotionWrapper>;
       case 'loading':
-        return <MotionWrapper key="loading"><LoadingView /></MotionWrapper>;
+        return <MotionWrapper motionKey="loading"><LoadingView /></MotionWrapper>;
       case 'itineraries':
-        return <MotionWrapper key="itineraries"><ItineraryView itineraries={tripData?.itineraries || []} onSelect={handleItinerarySelect} /></MotionWrapper>;
+        return <MotionWrapper motionKey="itineraries"><ItineraryView itineraries={tripData?.itineraries || []} onSelect={handleItinerarySelect} /></MotionWrapper>;
       case 'customize':
-        return <MotionWrapper key="customize"><CustomizeView onComplete={handleCustomizationComplete} /></MotionWrapper>;
+        return <MotionWrapper motionKey="customize"><CustomizeView onComplete={handleCustomizationComplete} /></MotionWrapper>;
       case 'summary':
-        return <MotionWrapper key="summary"><SummaryView tripData={tripData} onPlanAnother={handlePlanAnotherTrip} /></MotionWrapper>;
+        return <MotionWrapper motionKey="summary"><SummaryView tripData={tripData} onPlanAnother={handlePlanAnotherTrip} /></MotionWrapper>;
       default:
-        return <MotionWrapper key="default"><IntroView /></MotionWrapper>;
+        return <MotionWrapper motionKey="default"><IntroView /></MotionWrapper>;
     }
   };
 

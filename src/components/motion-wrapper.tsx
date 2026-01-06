@@ -5,13 +5,13 @@ import type { ReactNode } from 'react';
 
 interface MotionWrapperProps {
   children: ReactNode;
-  key: string;
+  motionKey: string;
 }
 
-export function MotionWrapper({ children, key }: MotionWrapperProps) {
+export function MotionWrapper({ children, motionKey }: MotionWrapperProps) {
   return (
     <motion.div
-      key={key}
+      key={motionKey}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
