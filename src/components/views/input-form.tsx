@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,36 +7,26 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { Card } from '@/components/ui/card';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, WandSparkles } from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
-import { Slider } from '@/components/ui/slider';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Textarea } from '@/components/ui/textarea';
+import { Globe, Waves, PartyPopper, Utensils, Trees, Palmtree } from 'lucide-react';
 
 const preferencesOptions = [
-  "Beaches",
-  "Adventure",
-  "Foodie",
-  "Relaxation",
-  "Sightseeing",
-  "Nightlife",
-  "Shopping",
-  "Cultural",
+  { label: "Food", icon: Utensils },
+  { label: "Beaches", icon: Waves },
+  { label: "Nightlife", icon: PartyPopper },
+  { label: "Culture", icon: Palmtree },
+  { label: "Nature", icon: Trees },
 ];
 
 const formSchema = z.object({
-  destination: z.string().min(2, { message: 'Destination must be at least 2 characters.' }),
-  travel_dates: z.object({
-    from: z.date({ required_error: 'Please select a start date.' }),
-    to: z.date().optional(),
-  }),
-  budget_range_inr: z.array(z.number()).default([50000]),
+  destination: z.string().min(2, { message: 'Please enter a destination.' }),
+  duration_days: z.string().min(1, { message: 'Please set a duration.'}),
   trip_type: z.enum(['informal', 'formal']).default('informal'),
-  people_count: z.string().min(1, { message: 'At least one person must be travelling.' }),
+  budget: z.number().min(0).max(100).default(50),
   preferences: z.array(z.string()).default([]),
+  people_count: z.string().min(1, { message: 'At least one person.' }),
 });
 
 type InputFormValues = z.infer<typeof formSchema>;
@@ -45,214 +36,256 @@ interface InputFormProps {
   isGenerating: boolean;
 }
 
+const budgetLabels = (value: number) => {
+    if (value < 33) return '💸 Budget';
+    if (value < 66) return '💼 Balanced';
+    return '✨ Premium';
+}
+
+const cardVariants = {
+    hidden: { opacity: 0, y: 30, scale: 0.98 },
+    visible: (i: number) => ({
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: {
+            delay: i * 0.15 + 0.4,
+            duration: 0.5,
+            ease: [0.22, 1, 0.36, 1] // easeOutQuint
+        }
+    })
+}
+
 export function InputForm({ onSubmit, isGenerating }: InputFormProps) {
   const form = useForm<InputFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       destination: '',
-      budget_range_inr: [50000],
+      duration_days: '3-5 days',
       trip_type: 'informal',
-      people_count: '2',
+      budget: 50,
       preferences: [],
+      people_count: '2',
     },
   });
 
   const handleSubmit = (values: InputFormValues) => {
-    const duration = values.travel_dates.to ? differenceInDays(values.travel_dates.to, values.travel_dates.from) + 1 : 1;
-    
+    const budgetMap: {[key: string]: string} = { '💸 Budget': '10000-30000', '💼 Balanced': '30000-70000', '✨ Premium': '70000+'};
     const submittedData = {
         ...values,
-        duration_days: duration.toString(),
-        budget_range_inr: `Up to ₹${values.budget_range_inr[0].toLocaleString()}`,
-        preferences: values.preferences,
-        travel_dates: `From ${format(values.travel_dates.from, "LLL dd, y")} ${values.travel_dates.to ? `to ${format(values.travel_dates.to, "LLL dd, y")}` : ''}`.trim(),
-        round_trip: !!values.travel_dates.to
+        budget_range_inr: budgetMap[budgetLabels(values.budget)],
+        travel_dates: `Not specified`, // This can be updated if a date picker is re-introduced
+        round_trip: true, // Assuming round trip for this simplified form
     };
+    // remove budget field
+    delete (submittedData as any).budget;
     onSubmit(submittedData);
   };
 
+  const formIsValid = form.formState.isValid;
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 p-6 border rounded-2xl bg-card/80 backdrop-blur-sm shadow-lg">
-        <div className="space-y-2 text-center">
-            <h2 className="text-2xl font-headline">Tell us your dream trip</h2>
-            <p className="text-muted-foreground text-sm">And the genie will make it a reality.</p>
-        </div>
-        <FormField
-          control={form.control}
-          name="destination"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Where to?</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g., Goa, India" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="travel_dates"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>When?</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant={'outline'}
-                      className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !field.value?.from && 'text-muted-foreground'
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {field.value?.from ? (
-                        field.value.to ? (
-                          <>
-                            {format(field.value.from, 'LLL dd, y')} -{' '}
-                            {format(field.value.to, 'LLL dd, y')}
-                          </>
-                        ) : (
-                          format(field.value.from, 'LLL dd, y')
-                        )
-                      ) : (
-                        <span>Pick a date range</span>
-                      )}
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="range"
-                    selected={{ from: field.value?.from, to: field.value?.to }}
-                    onSelect={field.onChange}
-                    numberOfMonths={1}
-                    disabled={(date) => date < new Date(new Date().setDate(new Date().getDate() - 1))}
-                  />
-                </PopoverContent>
-              </Popover>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="budget_range_inr"
-          render={({ field }) => (
-            <FormItem>
-                <FormLabel>Budget (per person)</FormLabel>
-                <FormControl>
-                    <div>
-                        <Slider
-                            min={10000}
-                            max={500000}
-                            step={5000}
-                            value={field.value}
-                            onValueChange={field.onChange}
-                        />
-                        <div className="text-center font-bold text-lg mt-2 text-primary/80">
-                            Up to ₹{field.value?.[0]?.toLocaleString()}
-                        </div>
-                    </div>
-                </FormControl>
-            </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="people_count"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>How many?</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="1" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-                control={form.control}
-                name="trip_type"
-                render={({ field }) => (
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="max-w-xl mx-auto space-y-4">
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" custom={1}>
+            <Card className="p-6 relative overflow-hidden transition-all hover:shadow-lg focus-within:shadow-lg focus-within:border-primary/50">
+                <Globe className="absolute -right-4 -top-4 h-24 w-24 text-muted/20 -rotate-12 transition-transform group-hover:rotate-0" />
+                <FormField
+                  control={form.control}
+                  name="destination"
+                  render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Trip Type</FormLabel>
-                    <FormControl>
-                        <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex items-center space-x-4 pt-2"
-                        >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="informal" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Informal</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                            <RadioGroupItem value="formal" />
-                            </FormControl>
-                            <FormLabel className="font-normal">Formal</FormLabel>
-                        </FormItem>
-                        </RadioGroup>
-                    </FormControl>
+                      <FormLabel className="text-lg font-medium">Destination</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Paris, Bali, Tokyo..." {...field} className="text-base h-12 mt-2 focus:border-primary/50" />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
-                )}
-            />
+                  )}
+                />
+            </Card>
+        </motion.div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <motion.div variants={cardVariants} initial="hidden" animate="visible" custom={2}>
+                <Card className="p-6 transition-all hover:shadow-lg focus-within:shadow-lg focus-within:border-primary/50 h-full">
+                     <FormField
+                        control={form.control}
+                        name="duration_days"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel className="text-lg font-medium">Duration</FormLabel>
+                                <FormControl>
+                                    <div className="flex gap-2 mt-2">
+                                        {['Weekend', '3-5 days', '1 week+'].map((days) => (
+                                            <Button 
+                                                key={days} 
+                                                type="button" 
+                                                variant={field.value === days ? "default" : "outline"} 
+                                                onClick={() => field.onChange(days)}
+                                                className="flex-1 transition-transform hover:scale-105 active:scale-95"
+                                            >
+                                                {days}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </FormControl>
+                             <FormMessage className="!mt-2" />
+                            </FormItem>
+                        )}
+                        />
+                </Card>
+            </motion.div>
+            <motion.div variants={cardVariants} initial="hidden" animate="visible" custom={2.5}>
+                <Card className="p-6 transition-all hover:shadow-lg focus-within:shadow-lg focus-within:border-primary/50 h-full">
+                     <FormField
+                        control={form.control}
+                        name="people_count"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel className="text-lg font-medium">How many people?</FormLabel>
+                                <FormControl>
+                                    <Input type="number" min="1" {...field} className="text-base h-12 mt-2 focus:border-primary/50" />
+                                </FormControl>
+                             <FormMessage className="!mt-2" />
+                            </FormItem>
+                        )}
+                        />
+                </Card>
+            </motion.div>
         </div>
-        <FormField
-          control={form.control}
-          name="preferences"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Preferences</FormLabel>
-              <FormControl>
-                <div className="flex flex-wrap gap-2">
-                  {preferencesOptions.map((preference) => (
-                    <Button
-                      key={preference}
-                      type="button"
-                      variant={field.value.includes(preference) ? "default" : "outline"}
-                      className={cn("rounded-full", field.value.includes(preference) && "bg-primary text-primary-foreground")}
-                      onClick={() => {
-                        const currentPreferences = field.value || [];
-                        const newPreferences = currentPreferences.includes(preference)
-                          ? currentPreferences.filter((p) => p !== preference)
-                          : [...currentPreferences, preference];
-                        field.onChange(newPreferences);
-                      }}
-                    >
-                      {preference}
-                    </Button>
-                  ))}
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button 
-            type="submit" 
-            className="w-full h-12 text-lg font-bold bg-gradient-to-r from-primary-start to-primary-end text-primary-foreground shadow-[0_8px_20px_-10px_hsl(var(--primary))] hover:shadow-[0_10px_25px_-10px_hsl(var(--primary))] transition-all duration-300"
-            disabled={isGenerating}
+
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" custom={3}>
+            <Card className="p-6 transition-all hover:shadow-lg">
+                <FormField
+                    control={form.control}
+                    name="trip_type"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="text-lg font-medium">Trip Type</FormLabel>
+                        <FormControl>
+                            <div className="grid grid-cols-2 gap-4 mt-2">
+                                <Card onClick={() => field.onChange('informal')} className={cn('p-4 text-center cursor-pointer transition-all duration-300 border-2', field.value === 'informal' ? 'border-primary shadow-lg scale-105' : 'hover:border-primary/50')}>
+                                    <span className="text-3xl">🌴</span>
+                                    <p className="font-semibold mt-2">Chill / Informal</p>
+                                </Card>
+                                <Card onClick={() => field.onChange('formal')} className={cn('p-4 text-center cursor-pointer transition-all duration-300 border-2', field.value === 'formal' ? 'border-primary shadow-lg scale-105' : 'hover:border-primary/50')}>
+                                    <span className="text-3xl">💼</span>
+                                    <p className="font-semibold mt-2">Formal / Work</p>
+                                </Card>
+                            </div>
+                        </FormControl>
+                        </FormItem>
+                    )}
+                />
+            </Card>
+        </motion.div>
+
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" custom={4}>
+            <Card className="p-6 transition-all hover:shadow-lg focus-within:shadow-lg">
+                <FormField
+                  control={form.control}
+                  name="budget"
+                  render={({ field }) => (
+                    <FormItem>
+                        <FormLabel className="text-lg font-medium flex justify-between items-baseline">
+                            <span>Budget</span>
+                            <span className="font-semibold text-primary">{budgetLabels(field.value)}</span>
+                        </FormLabel>
+                        <FormControl>
+                            <input
+                                type="range"
+                                min={0}
+                                max={100}
+                                step={1}
+                                value={field.value}
+                                onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer range-lg accent-primary"
+                            />
+                        </FormControl>
+                    </FormItem>
+                  )}
+                />
+            </Card>
+        </motion.div>
+
+        <motion.div variants={cardVariants} initial="hidden" animate="visible" custom={5}>
+            <Card className="p-6 transition-all hover:shadow-lg">
+                <FormField
+                  control={form.control}
+                  name="preferences"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-lg font-medium">Preferences</FormLabel>
+                      <FormControl>
+                        <div className="flex flex-wrap gap-3 mt-3">
+                          {preferencesOptions.map((preference) => (
+                            <button
+                              key={preference.label}
+                              type="button"
+                              className={cn(
+                                "flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-all duration-200 transform",
+                                field.value.includes(preference.label)
+                                  ? "bg-primary border-primary text-primary-foreground scale-105 shadow-md"
+                                  : "bg-background border-input hover:border-primary/50 hover:bg-muted"
+                              )}
+                              onClick={() => {
+                                const currentPreferences = field.value || [];
+                                const newPreferences = currentPreferences.includes(preference.label)
+                                  ? currentPreferences.filter((p) => p !== preference.label)
+                                  : [...currentPreferences, preference.label];
+                                field.onChange(newPreferences);
+                              }}
+                            >
+                              <preference.icon className="h-4 w-4" />
+                              <span className="font-medium">{preference.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+            </Card>
+        </motion.div>
+
+        <motion.div 
+            variants={cardVariants} 
+            initial="hidden" 
+            animate="visible"
+            custom={6}
+            className="pt-6"
         >
-            {isGenerating ? (
-                <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-foreground mr-3"></div>
-                    Brewing Magic...
-                </>
-            ) : (
-                <>
-                    <WandSparkles className="mr-2 h-5 w-5" />
-                    Ask the Genie
-                </>
-            )}
-        </Button>
+            <Button 
+                type="submit" 
+                className={cn(
+                    "w-full h-14 text-lg font-bold bg-gradient-to-r from-primary-start to-primary-end text-primary-foreground transition-all duration-300 ease-in-out shadow-[0_8px_30px_-10px_hsl(var(--primary))] hover:shadow-[0_12px_40px_-10px_hsl(var(--primary))]",
+                    formIsValid && !isGenerating && "animate-pulse"
+                )}
+                disabled={isGenerating}
+            >
+                {isGenerating ? (
+                    <motion.div 
+                        key="loading"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center"
+                    >
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-foreground mr-3"></div>
+                        AI agents are planning your trip...
+                    </motion.div>
+                ) : (
+                    <motion.div 
+                        key="ready"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center"
+                    >
+                        Plan my trip ✈️
+                    </motion.div>
+                )}
+            </Button>
+        </motion.div>
       </form>
     </Form>
   );
