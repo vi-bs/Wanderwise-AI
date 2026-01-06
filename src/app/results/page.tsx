@@ -287,7 +287,9 @@ export default function ResultsPage() {
                                   />
                                   <div className="flex-grow">
                                     <Label htmlFor={`activity-${activity.id}`} className="font-semibold text-base cursor-pointer">{activity.name}</Label>
-                                    <p className="text-sm text-muted-foreground italic">"{activity.review.snippet}" <span className="font-bold not-italic">({activity.review.rating} ★)</span></p>
+                                    {activity.review && (
+                                      <p className="text-sm text-muted-foreground italic">"{activity.review.snippet}" <span className="font-bold not-italic">({activity.review.rating} ★)</span></p>
+                                    )}
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
                                       <span>Duration: {activity.duration}</span>
                                       <span>Cost: ₹{activity.cost.toLocaleString('en-IN')}</span>
