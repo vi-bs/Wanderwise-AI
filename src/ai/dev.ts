@@ -1,1 +1,6 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/enhance-formal-trips.ts';
+import '@/ai/flows/generate-personalized-itineraries.ts';
+import '@/ai/flows/analyze-reviews-for-recommendations.ts';

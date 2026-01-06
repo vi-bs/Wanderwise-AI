@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "goa-beach",
+      "description": "A beautiful sunny beach in Goa, India with palm trees and blue water.",
+      "imageUrl": "https://images.unsplash.com/photo-1668262120979-a1af71765107?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxiZWFjaCUyMGdvYXxlbnwwfHx8fDE3Njc3MTUwNjV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "beach goa"
+    },
+    {
+      "id": "manali-mountains",
+      "description": "Snow-capped mountains in Manali, India, with a clear blue sky.",
+      "imageUrl": "https://images.unsplash.com/photo-1529088003484-58e0fadd0eb7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxzbm93JTIwbW91bnRhaW5zfGVufDB8fHx8MTc2NzcxNTA2NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "snow mountains"
+    },
+    {
+      "id": "paris-eiffel",
+      "description": "The Eiffel Tower in Paris, France during a beautiful sunset.",
+      "imageUrl": "https://images.unsplash.com/photo-1604175287072-b5e71423060c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxlaWZmZWwlMjB0b3dlcnxlbnwwfHx8fDE3Njc2MjQ1MDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "eiffel tower"
+    },
+    {
+      "id": "tokyo-streets",
+      "description": "A bustling street in Tokyo, Japan at night with neon lights.",
+      "imageUrl": "https://images.unsplash.com/photo-1571497245719-ce3e7f16db1f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx0b2t5byUyMHN0cmVldHxlbnwwfHx8fDE3Njc2MjQ1MDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tokyo street"
+    },
+    {
+      "id": "jaipur-fort",
+      "description": "A majestic fort in Jaipur, India under the sun.",
+      "imageUrl": "https://images.unsplash.com/photo-1671459634944-f68864ff351c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxqYWlwdXIlMjBmb3J0fGVufDB8fHx8MTc2NzcxNTA2NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "jaipur fort"
+    },
+    {
+      "id": "kerala-backwaters",
+      "description": "A houseboat on the serene backwaters of Kerala, India.",
+      "imageUrl": "https://images.unsplash.com/photo-1661174607003-d9d36388c916?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxrZXJhbGElMjBiYWNrd2F0ZXJzfGVufDB8fHx8MTc2NzY4Mzk3OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "kerala backwaters"
+    },
+    {
+      "id": "hotel-room",
+      "description": "A modern and clean hotel room with a large bed and a view.",
+      "imageUrl": "https://images.unsplash.com/photo-1711059985570-4c32ed12a12c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxob3RlbCUyMHJvb218ZW58MHx8fHwxNzY3NjE0NjI4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "hotel room"
+    },
+    {
+      "id": "airplane-wing",
+      "description": "View from an airplane window, showing the wing and clouds.",
+      "imageUrl": "https://images.unsplash.com/photo-1603277103691-756354934c2d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhaXJwbGFuZSUyMHdpbmRvd3xlbnwwfHx8fDE3Njc3MTI2MTR8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "airplane window"
+    }
+  ]
 }

@@ -1,0 +1,85 @@
+'use server';
+
+/**
+ * @fileOverview Generates personalized travel itineraries based on user input using an n8n multi-agent workflow.
+ *
+ * - generatePersonalizedItineraries - A function that triggers the n8n workflow and returns the generated itineraries.
+ * - GeneratePersonalizedItinerariesInput - The input type for the generatePersonalizedItineraries function.
+ * - GeneratePersonalizedItinerariesOutput - The return type for the generatePersonalizedItineraries function.
+ */
+
+import {z} from 'genkit';
+
+const GeneratePersonalizedItinerariesInputSchema = z.object({
+  destination: z.string().describe('The travel destination.'),
+  duration_days: z.string().describe('The duration of the trip in days.'),
+  trip_type: z.enum(['formal', 'informal']).describe('The type of trip (formal or informal).'),
+  budget_range_inr: z.string().describe('The budget range for the trip in INR.'),
+  round_trip: z.boolean().describe('Whether the trip is round trip or one way.'),
+  people_count: z.string().describe('The number of people traveling.'),
+  preferences: z.array(z.string()).describe('An array of travel preferences.'),
+  travel_dates: z.string().describe('The desired travel dates.'),
+});
+export type GeneratePersonalizedItinerariesInput = z.infer<
+  typeof GeneratePersonalizedItinerariesInputSchema
+>;
+
+const GeneratePersonalizedItinerariesOutputSchema = z.object({
+  itineraries: z.array(z.any()).describe('An array of generated travel itineraries.'),
+  // Define the structure of an itinerary object based on the n8n workflow output
+  // For now, using z.any() as the exact structure is determined by the n8n workflow
+});
+export type GeneratePersonalizedItinerariesOutput = z.infer<
+  typeof GeneratePersonalizedItinerariesOutputSchema
+>;
+
+export async function generatePersonalizedItineraries(
+  input: GeneratePersonalizedItinerariesInput
+): Promise<GeneratePersonalizedItinerariesOutput> {
+  // Placeholder for actual implementation that would call the n8n webhook
+  // and process the response.
+
+  // IMPORTANT: The n8n workflow MUST be triggered via WEBHOOK when:
+  // - User clicks “Ask the Genie”
+  // - Firebase sends a POST request with user input JSON
+  //
+  // ❌ Do NOT use:
+  //   - Manual trigger
+  //   - Schedule trigger
+  //   - Chat trigger
+  //   - Form trigger inside n8n
+  //
+  // ✅ Use:
+  //   - Webhook Trigger (POST)
+
+  const webhookUrl = process.env.N8N_WEBHOOK_URL; // Ensure this environment variable is set
+
+  if (!webhookUrl) {
+    throw new Error(
+      'N8N_WEBHOOK_URL environment variable is not set.  Please configure it in your .env file.'
+    );
+  }
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      console.error('Error response from n8n:', await response.text());
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Assuming the n8n workflow returns an array of itineraries
+    return { itineraries: data };
+  } catch (error: any) {
+    console.error('Failed to call n8n webhook:', error);
+    throw new Error(`Failed to generate itineraries: ${error.message}`);
+  }
+}
