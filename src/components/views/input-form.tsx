@@ -15,6 +15,17 @@ import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 
+const preferencesOptions = [
+  "Beaches",
+  "Adventure",
+  "Foodie",
+  "Relaxation",
+  "Sightseeing",
+  "Nightlife",
+  "Shopping",
+  "Cultural",
+];
+
 const formSchema = z.object({
   destination: z.string().min(2, { message: 'Destination must be at least 2 characters.' }),
   travel_dates: z.object({
@@ -24,7 +35,7 @@ const formSchema = z.object({
   budget_range_inr: z.array(z.number()).default([50000]),
   trip_type: z.enum(['informal', 'formal']).default('informal'),
   people_count: z.string().min(1, { message: 'At least one person must be travelling.' }),
-  preferences: z.string().optional(),
+  preferences: z.array(z.string()).default([]),
 });
 
 type InputFormValues = z.infer<typeof formSchema>;
@@ -42,7 +53,7 @@ export function InputForm({ onSubmit, isGenerating }: InputFormProps) {
       budget_range_inr: [50000],
       trip_type: 'informal',
       people_count: '2',
-      preferences: '',
+      preferences: [],
     },
   });
 
@@ -53,7 +64,7 @@ export function InputForm({ onSubmit, isGenerating }: InputFormProps) {
         ...values,
         duration_days: duration.toString(),
         budget_range_inr: `Up to ₹${values.budget_range_inr[0].toLocaleString()}`,
-        preferences: values.preferences?.split(',').map(p => p.trim()).filter(p => p) || [],
+        preferences: values.preferences,
         travel_dates: `From ${format(values.travel_dates.from, "LLL dd, y")} ${values.travel_dates.to ? `to ${format(values.travel_dates.to, "LLL dd, y")}` : ''}`.trim(),
         round_trip: !!values.travel_dates.to
     };
@@ -201,7 +212,25 @@ export function InputForm({ onSubmit, isGenerating }: InputFormProps) {
             <FormItem>
               <FormLabel>Preferences</FormLabel>
               <FormControl>
-                <Textarea placeholder="e.g., beaches, hiking, quiet cafes, museums" {...field} />
+                <div className="flex flex-wrap gap-2">
+                  {preferencesOptions.map((preference) => (
+                    <Button
+                      key={preference}
+                      type="button"
+                      variant={field.value.includes(preference) ? "default" : "outline"}
+                      className={cn("rounded-full", field.value.includes(preference) && "bg-primary text-primary-foreground")}
+                      onClick={() => {
+                        const currentPreferences = field.value || [];
+                        const newPreferences = currentPreferences.includes(preference)
+                          ? currentPreferences.filter((p) => p !== preference)
+                          : [...currentPreferences, preference];
+                        field.onChange(newPreferences);
+                      }}
+                    >
+                      {preference}
+                    </Button>
+                  ))}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
