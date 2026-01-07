@@ -11,7 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, ArrowLeft, BedDouble, Car, CheckCircle2, ChevronRight, Info, Link as LinkIcon, MapPin, Milestone, Plane, Shield, Star, TramFront, Users, Utensils, Wallet, Sparkles } from 'lucide-react';
+import { ArrowLeft, BedDouble, Car, CheckCircle2, ChevronRight, Info, Link as LinkIcon, MapPin, Milestone, Plane, Shield, Star, TramFront, Users, Utensils, Wallet, Sparkles } from 'lucide-react';
 import type { TripData, Itinerary, DailyPlan, Activity, Hotel, CommuteOption } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -214,6 +214,21 @@ export default function ResultsPage() {
     };
   }, [activeItinerary, selectedHotelId, selectedCommuteId, tripData]);
 
+  const handleFinalizeTrip = () => {
+    if (!tripData || !activeItinerary || !calculatedCosts) return;
+
+    const finalTripData = {
+        request: tripData.input,
+        itinerary: activeItinerary,
+        selectedHotel: activeItinerary.hotelOptions.find(h => h.id === selectedHotelId),
+        selectedCommute: activeItinerary.commuteOptions.find(c => c.id === selectedCommuteId),
+        selectedActivities: activeItinerary.dailyPlan.flatMap(d => d.activities).filter(a => a.selected),
+        costs: calculatedCosts,
+    };
+    localStorage.setItem('finalTripSummary', JSON.stringify(finalTripData));
+    window.open('/summary', '_blank');
+  };
+
   if (!tripData || !activeItinerary || !calculatedCosts) {
     return <LoadingState />;
   }
@@ -340,7 +355,11 @@ export default function ResultsPage() {
                             ))}
                         </ul>
                          <div className="flex justify-end pt-4">
-                            <Button size="lg" className="bg-gradient-to-r from-primary-start to-primary-end text-primary-foreground shadow-lg hover:shadow-xl">
+                            <Button 
+                                size="lg" 
+                                className="bg-gradient-to-r from-primary-start to-primary-end text-primary-foreground shadow-lg hover:shadow-xl"
+                                onClick={handleFinalizeTrip}
+                            >
                                 <Sparkles className="mr-2 h-4 w-4" /> Finalize & Book Trip
                             </Button>
                         </div>
@@ -455,5 +474,3 @@ export default function ResultsPage() {
     </div>
   );
 }
-
-    
