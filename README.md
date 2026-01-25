@@ -1,170 +1,76 @@
-<<<<<<< HEAD
-🚀 Agentic AI Travel Planner (Secure & Stateful)
+# 🔮 Wanderwise AI - Your Personal AI Travel Genie
 
-A production-oriented, agent-based AI travel planning application that designs, customizes, and books entire trips end-to-end with minimal user input. The system is built with a UI-first philosophy, secure backend orchestration, and strong state management for reliability.
+Wanderwise AI is a smart, AI-powered travel planner that transforms a few simple inputs into fully-detailed, customizable, and bookable trip itineraries. Tell the genie your destination, budget, and vibe, and it will handle the rest, from planning daily activities to finding the perfect hotel.
 
-⸻
+![Wanderwise AI Demo](https://storage.googleapis.com/aifire.dev/public/wanderwise-demo.gif)
 
-✨ What This Project Does
+## ✨ Key Features
 
-Users provide only a few high-level details:
-	•	Destination
-	•	Trip type (Formal / Informal)
-	•	Duration
-	•	Total budget
-	•	Basic preferences
+- **AI-Powered Itinerary Generation**: Enter a destination, duration, budget, and travel style, and our Genkit-powered AI generates multiple unique travel plans.
+- **Interactive Vibe Selection**: Choose from distinct itinerary "vibes" like "Party Hopper," "Chilled Beach Bum," or "Nature & Adventure," presented in a playful, carousel-style UI.
+- **Detailed Daily Plans**: Each itinerary includes a day-by-day breakdown with curated activities, approximate durations, estimated costs, and real review highlights.
+- **Curated Accommodation & Commute Options**: Get a list of 3-5 hand-picked hotel and transportation options for each plan, complete with booking links, ratings, and pros/cons.
+- **Dynamic & Transparent Budgeting**: An interactive cost calculator breaks down your expenses in real-time. See how your choices for hotels, activities, and transport affect your total budget.
+- **Safety & Confidence Scores**: Every recommendation (hotel, activity, commute) comes with an AI-generated safety and confidence score (0-100) based on aggregated review sentiment, so you can book with peace of mind.
+- **One-Click Final Summary**: "Book" your trip to see a final, polished summary page with all your selections, ready for you to share or use for booking.
 
-The system takes care of everything else — from budgeting and itinerary planning to review-based decision-making and booking.
+## 🛠️ Tech Stack
 
-⸻
+- **Framework**: [Next.js](https://nextjs.org/) (with App Router)
+- **AI & Orchestration**: [Genkit](https://firebase.google.com/docs/genkit) (using Google's Gemini models)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [ShadCN/UI](https://ui.shadcn.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
 
-🧠 High-Level Architecture
+## 🚀 Getting Started
 
-Frontend (Firebase UI)
-   ↓
-Secure Backend (Cloud Functions)
-   ↓
-n8n Workflow Orchestrator
-   ↓
-AI Agents (LLMs)
-   ↓
-Redis (State & Session Memory)
-   ↓
-Booking APIs (Flights, Hotels, Cabs, Tickets)
+Follow these steps to get the project running on your local machine.
 
+### Prerequisites
 
-⸻
+- Node.js (v18 or later)
+- npm or yarn
 
-🤖 Core AI Agents
+### Installation & Setup
 
-1. Context Agent
-	•	Validates and structures user input
-	•	Infers travel style (budget / mid / premium)
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/vi-bs/Wanderwise-AI.git
+    cd Wanderwise-AI
+    ```
 
-2. Trip Estimator Agent
-	•	Breaks total budget into categories:
-	•	Flights
-	•	Stay
-	•	Food
-	•	Transport
-	•	Activities
-	•	Buffer
-	•	Generates multiple budget plans
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-3. Itinerary Intelligence Agent
-	•	Understands what the destination is known for
-	•	Generates multiple itinerary options
+3.  **Set up environment variables:**
+    Create a file named `.env` in the root of your project and add the following. You will need a Gemini API key for the AI features to work.
+    ```env
+    # Get your API key from Google AI Studio: https://aistudio.google.com/app/apikey
+    GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+    ```
+    *Note: The project also includes scaffolding for an n8n workflow, but it is not required for the core AI functionality.*
 
-4. Review Analyzer Agent
-	•	Analyzes real human reviews
-	•	Scores options based on safety, reliability, and value
+4.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
 
-5. Decision Layer
-	•	Lets user choose OR
-	•	Auto-selects the best plan using scoring and reward logic
+The application should now be running at [http://localhost:9002](http://localhost:9002).
 
-6. Booking Agents
-	•	Separate workflows for:
-	•	Flights
-	•	Hotels
-	•	Cabs
-	•	Activities
-	•	One-click booking after confirmation
+## 📂 Project Structure
 
-⸻
+- **`/src/app`**: Contains all the pages and UI components for the Next.js application.
+  - **`/src/app/page.tsx`**: The main landing page with the multi-step input form.
+  - **`/src/app/results/page.tsx`**: The interactive itinerary results page.
+  - **`/src/app/summary/page.tsx`**: The final trip summary page.
+- **`/src/ai`**: Home to the Genkit AI flows.
+  - **`/src/ai/flows/generate-personalized-itineraries.ts`**: The core AI flow that takes user input and generates structured travel plans using the Gemini model.
+- **`/src/components`**: Shared UI components, including the ShadCN/UI library.
+- **`/src/lib`**: Contains utility functions, type definitions (`types.ts`), and placeholder data.
 
-🧳 Formal vs Informal Trips
+## 📄 License
 
-Informal Trips
-	•	Sightseeing
-	•	Food & nightlife
-	•	Experiences and leisure activities
-
-Formal Trips
-	•	Meeting location, time, and duration
-	•	Hotels near venue
-	•	Cab scheduling
-	•	Reliable Wi-Fi and workspace-friendly stays
-
-⸻
-
-🔄 State Management (Redis)
-
-Redis is used to store:
-	•	User session state
-	•	Trip planning progress
-	•	Shortlisted options
-	•	User approvals
-
-This enables:
-	•	Resuming workflows if the app closes
-	•	Multi-step planning without data loss
-	•	Preventing duplicate bookings
-
-⸻
-
-🔐 Security & Privacy
-	•	Encrypted data in transit and at rest
-	•	API gateway + rate limiting
-	•	Role-based access control
-	•	Minimal, sanitized data shared with agents
-	•	Audit logs for booking flows
-	•	Idempotent execution to avoid double charges
-
-⸻
-
-🎨 UI / UX Philosophy
-	•	Clean, minimal, trust-focused design
-	•	Smooth transitions and feedback loops
-	•	Quirky, light doodle elements for personality
-	•	Clear approval and confirmation steps
-	•	No cognitive overload for users
-
-⸻
-
-🛠️ Tech Stack
-	•	Frontend: Firebase (Auth, Firestore-ready UI)
-	•	Backend: Firebase Cloud Functions
-	•	Workflow Orchestration: n8n
-	•	AI Models: LLM-based agents
-	•	State Management: Redis
-	•	Integrations: Travel & booking APIs (plug-in ready)
-
-⸻
-
-🎯 End Goal
-
-Give users a single, secure interface where they can:
-	•	Share intent
-	•	Review smart, review-backed options
-	•	Customize if needed
-	•	Confirm once
-
-And have their entire trip planned and booked seamlessly.
-
-⸻
-
-📌 Project Status
-	•	UI/UX: In progress
-	•	Workflow design: Planned
-	•	Agent orchestration: Planned
-	•	Booking integrations: Future phase
-
-⸻
-
-🤝 Contributing
-
-This project is currently in early development. Contributions, feedback, and architecture discussions are welcome.
-
-⸻
-
-📄 License
-
-MIT License
-=======
-# Firebase Studio
-
-This is a NextJS starter in Firebase Studio.
-
-To get started, take a look at src/app/page.tsx.
->>>>>>> f2839bc (Initialized workspace with Firebase Studio)
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
