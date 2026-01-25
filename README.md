@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 🚀 Agentic AI Travel Planner (Secure & Stateful)
 
 A production-oriented, agent-based AI travel planning application that designs, customizes, and books entire trips end-to-end with minimal user input. The system is built with a UI-first philosophy, secure backend orchestration, and strong state management for reliability.
@@ -160,3 +161,10 @@ This project is currently in early development. Contributions, feedback, and arc
 📄 License
 
 MIT License
+=======
+# Firebase Studio
+
+This is a NextJS starter in Firebase Studio.
+
+To get started, take a look at src/app/page.tsx.
+>>>>>>> f2839bc (Initialized workspace with Firebase Studio)
