@@ -62,7 +62,7 @@ const HotelSchema = z.object({
 
 const CommuteOptionSchema = z.object({
   id: z.string().describe('Unique ID for the commute option, e.g., "com-scooty"'),
-  type: z.enum(['Scooter Rental', 'Car Rental', 'Airport Taxi', 'Local Bus', 'Ride-Sharing']).describe('Type of commute.'),
+  type: z.string().describe('Type of commute (dynamic based on destination, e.g., Metro, Tuk-tuk, Ferry, etc.)'),
   cost: z.number().describe('Estimated daily or per-trip cost in INR.'),
   infoLink: z.string().url().describe('A real, working URL for more information or booking.'),
   pros: z.array(z.string()).describe('A list of advantages for this commute type.'),
@@ -141,21 +141,72 @@ const generateItinerariesFlow = ai.defineFlow(
 export async function generatePersonalizedItineraries(
   input: GeneratePersonalizedItinerariesInput
 ): Promise<GeneratePersonalizedItinerariesOutput> {
-  console.log('Generating real itineraries for:', input.destination);
+  console.log('🚀 Generating comprehensive itineraries for:', input.destination);
   
-  // For now, to avoid long waits and potential API costs during UI development,
-  // we will return mock data. Replace this with a call to the actual flow when ready for production.
+  // Use the new multi-agent system for realistic, destination-agnostic itineraries
+  if (process.env.USE_MULTI_AGENT_SYSTEM === 'true') {
+    console.log("🤖 Using multi-agent system for comprehensive itinerary generation");
+    try {
+      const { generateComprehensiveItineraries } = await import('./master-itinerary-orchestrator');
+      const comprehensiveResult = await generateComprehensiveItineraries(input);
+      
+      // Transform the comprehensive result to match the expected output schema
+      return {
+        itineraries: comprehensiveResult.itineraries.map(itinerary => ({
+          ...itinerary,
+          // Ensure compatibility with existing UI expectations
+          hotelOptions: itinerary.hotelOptions.map(hotel => ({
+            id: hotel.id,
+            name: hotel.name,
+            rating: hotel.rating,
+            costPerNight: hotel.costPerNight,
+            bookingLink: hotel.bookingLink,
+            safetyScore: hotel.safetyScore,
+            review: hotel.review,
+          })),
+          commuteOptions: itinerary.commuteOptions.map(commute => ({
+            id: commute.id,
+            type: commute.type as any, // Type will be dynamic now
+            cost: commute.cost,
+            infoLink: commute.infoLink,
+            pros: commute.pros,
+            cons: commute.cons,
+            safetyScore: commute.safetyScore,
+          })),
+          dailyPlan: itinerary.dailyPlan.map(day => ({
+            day: day.day,
+            title: day.title,
+            activities: day.activities.map(activity => ({
+              id: activity.id,
+              name: activity.name,
+              duration: activity.duration,
+              infoLink: activity.infoLink,
+              cost: activity.cost,
+              safetyScore: activity.safetyScore,
+              selected: activity.selected,
+              review: activity.review,
+            })),
+          })),
+        })),
+      };
+    } catch (error) {
+      console.error("❌ Multi-agent system failed, falling back to single-agent:", error);
+      // Fall back to single agent system
+    }
+  }
+  
+  // For development or fallback, use the existing system
   if (process.env.NODE_ENV === 'development' && !process.env.USE_REAL_AI) {
-      console.log("Using mock data for development.");
-      return createMockItineraries(input);
+    console.log("🔧 Using mock data for development");
+    return createMockItineraries(input);
   }
   
   try {
+    console.log("🤖 Using single-agent system");
     const result = await generateItinerariesFlow(input);
     return result;
   } catch (error) {
-    console.error("Error generating real itinerary, falling back to mock data:", error);
-    // Fallback to mock data if the real call fails.
+    console.error("❌ Single-agent system failed, falling back to mock data:", error);
     return createMockItineraries(input);
   }
 }

@@ -35,7 +35,7 @@ export type Hotel = {
 
 export type CommuteOption = {
   id: string;
-  type: 'Scooter Rental' | 'Car Rental' | 'Airport Taxi' | 'Local Bus' | 'Ride-Sharing';
+  type: string; // Changed from enum to string to support any transport type
   cost: number; // Can be per day or per trip
   infoLink: string;
   pros: string[];
